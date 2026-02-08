@@ -209,7 +209,7 @@ class UserMapperTest {
 ## Requirements
 
 - Java 21 or higher
-- Spring Boot 3.x (optional, for Spring mode)
+- Spring Boot 4.x (optional, for Spring mode)
 - MyBatis 3.5.x
 - JUnit 5
 
