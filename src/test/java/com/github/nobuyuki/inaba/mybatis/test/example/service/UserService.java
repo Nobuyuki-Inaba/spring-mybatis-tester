@@ -46,6 +46,9 @@ public class UserService {
     }
 
     public boolean isEmailRegistered(String email) {
+        // Note: In production code, this should use a dedicated mapper method
+        // like: @Select("SELECT COUNT(*) FROM users WHERE email = #{email}")
+        // For this example library, we keep it simple
         return userMapper.findAll().stream()
             .anyMatch(u -> u.getEmail().equals(email));
     }

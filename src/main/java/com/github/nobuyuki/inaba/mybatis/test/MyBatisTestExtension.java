@@ -6,6 +6,9 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.junit.jupiter.api.extension.*;
+import org.mybatis.spring.mapper.MapperFactoryBean;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -136,8 +139,34 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
     private ApplicationContext createSpringContext(MyBatisTest annotation, ExtensionContext context) {
         // Create minimal Spring context with MyBatis support
         AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
+        
+        // Register configuration
         appContext.register(MyBatisTestConfiguration.class);
+        
+        // Scan test class package for components
+        String testPackage = context.getRequiredTestClass().getPackage().getName();
+        appContext.scan(testPackage);
+        
+        // Register mapper factory beans BEFORE refresh
+        if (annotation.mappers().length > 0) {
+            DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) appContext.getBeanFactory();
+            
+            for (Class<?> mapperClass : annotation.mappers()) {
+                // Register mapper as Spring bean using MapperFactoryBean
+                BeanDefinitionBuilder builder = BeanDefinitionBuilder
+                    .genericBeanDefinition(MapperFactoryBean.class)
+                    .addConstructorArgValue(mapperClass)
+                    .addPropertyReference("sqlSessionFactory", "sqlSessionFactory");
+                
+                String beanName = mapperClass.getSimpleName().substring(0, 1).toLowerCase() + 
+                                 mapperClass.getSimpleName().substring(1);
+                beanFactory.registerBeanDefinition(beanName, builder.getBeanDefinition());
+            }
+        }
+        
+        // Now refresh to create all beans
         appContext.refresh();
+        
         return appContext;
     }
 

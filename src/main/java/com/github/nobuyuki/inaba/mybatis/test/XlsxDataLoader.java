@@ -37,7 +37,7 @@ public class XlsxDataLoader {
             
             for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
                 Sheet sheet = workbook.getSheetAt(i);
-                String tableName = sheet.getSheetName();
+                String tableName = sanitizeIdentifier(sheet.getSheetName());
                 
                 if (sheet.getPhysicalNumberOfRows() == 0) {
                     continue;
@@ -47,7 +47,7 @@ public class XlsxDataLoader {
                 Row headerRow = sheet.getRow(0);
                 List<String> columns = new ArrayList<>();
                 for (Cell cell : headerRow) {
-                    columns.add(cell.getStringCellValue());
+                    columns.add(sanitizeIdentifier(cell.getStringCellValue()));
                 }
                 
                 // Clear existing data
@@ -64,6 +64,26 @@ public class XlsxDataLoader {
                 }
             }
         }
+    }
+
+    /**
+     * Sanitizes SQL identifiers to prevent SQL injection.
+     * Only allows alphanumeric characters and underscores.
+     */
+    private String sanitizeIdentifier(String identifier) {
+        if (identifier == null || identifier.isEmpty()) {
+            throw new IllegalArgumentException("Identifier cannot be null or empty");
+        }
+        
+        // Only allow alphanumeric and underscore
+        if (!identifier.matches("^[a-zA-Z][a-zA-Z0-9_]*$")) {
+            throw new IllegalArgumentException(
+                "Invalid identifier: " + identifier + 
+                ". Only alphanumeric characters and underscores are allowed."
+            );
+        }
+        
+        return identifier;
     }
 
     private void insertRow(Connection conn, String tableName, List<String> columns, Row row) throws Exception {

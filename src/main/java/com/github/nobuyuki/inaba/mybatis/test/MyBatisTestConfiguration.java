@@ -2,7 +2,7 @@ package com.github.nobuyuki.inaba.mybatis.test;
 
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
-import org.mybatis.spring.mapper.MapperScannerConfigurer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -16,12 +16,13 @@ import javax.sql.DataSource;
 /**
  * Spring configuration for MyBatis tests.
  * Used when @MyBatisTest(useSpring = true).
+ * 
+ * Note: This is a default configuration for testing.
+ * Users can provide their own configuration by excluding this and
+ * providing custom configuration classes.
  */
 @Configuration
 @EnableTransactionManagement
-@ComponentScan(basePackages = {
-    "com.github.nobuyuki.inaba.mybatis.test.example"
-})
 public class MyBatisTestConfiguration {
 
     @Bean
@@ -50,12 +51,5 @@ public class MyBatisTestConfiguration {
     @Bean
     public PlatformTransactionManager transactionManager(DataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);
-    }
-
-    @Bean
-    public static MapperScannerConfigurer mapperScannerConfigurer() {
-        MapperScannerConfigurer configurer = new MapperScannerConfigurer();
-        configurer.setBasePackage("com.github.nobuyuki.inaba.mybatis.test.example");
-        return configurer;
     }
 }
