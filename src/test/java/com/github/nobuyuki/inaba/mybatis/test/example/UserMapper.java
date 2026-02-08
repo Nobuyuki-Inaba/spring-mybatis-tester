@@ -19,6 +19,10 @@ public interface UserMapper {
     @Insert("INSERT INTO users (id, name, email, age) VALUES (#{id}, #{name}, #{email}, #{age})")
     void insert(User user);
 
+    @Insert("INSERT INTO users (name, email, age) VALUES (#{name}, #{email}, #{age})")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    void insertWithAutoId(User user);
+
     @Update("UPDATE users SET name = #{name}, email = #{email}, age = #{age} WHERE id = #{id}")
     void update(User user);
 

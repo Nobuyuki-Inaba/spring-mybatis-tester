@@ -187,9 +187,7 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
         Class<?> clazz = testInstance.getClass();
         
         for (Field field : clazz.getDeclaredFields()) {
-            if (field.isAnnotationPresent(org.springframework.beans.factory.annotation.Autowired.class) ||
-                field.isAnnotationPresent(javax.inject.Inject.class)) {
-                
+            if (field.isAnnotationPresent(org.springframework.beans.factory.annotation.Autowired.class)) {
                 field.setAccessible(true);
                 Object dependency = resolveDependency(field.getType(), testContext);
                 if (dependency != null) {
