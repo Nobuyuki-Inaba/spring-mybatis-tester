@@ -15,9 +15,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @MyBatisTest(
     mappers = {UserMapper.class},
-    initScripts = {"schema.sql"}
-    // Uncomment when you have testdata.xlsx:
-    // dataFile = "testdata.xlsx"
+    initScripts = {"schema.sql"},
+    dataFile = "testdata.xlsx"
 )
 class UserMapperXlsxTest {
 
@@ -26,20 +25,13 @@ class UserMapperXlsxTest {
 
     @Test
     void testDataLoadedFromXlsx() {
-        // This test demonstrates how the library would work with XLSX data
-        // In a real scenario, the data would be automatically loaded from testdata.xlsx
-        
-        // For now, we manually insert test data
-        userMapper.insert(new User(1L, "Alice", "alice@test.com", 25));
-        userMapper.insert(new User(2L, "Bob", "bob@test.com", 35));
-        
         List<User> users = userMapper.findAll();
-        assertEquals(2, users.size());
+        assertEquals(3, users.size());
         
         // Verify the data
         User alice = userMapper.findById(1L);
         assertNotNull(alice);
         assertEquals("Alice", alice.getName());
-        assertEquals("alice@test.com", alice.getEmail());
+        assertEquals("alice@example.com", alice.getEmail());
     }
 }

@@ -166,6 +166,16 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
         
         // Now refresh to create all beans
         appContext.refresh();
+
+        // Run init scripts (e.g. schema.sql) against the DataSource created in the Spring context
+        if (annotation.initScripts().length > 0) {
+            try {
+                DataSource ds = appContext.getBean(DataSource.class);
+                runInitScripts(annotation.initScripts(), ds);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to run init scripts in Spring context", e);
+            }
+        }
         
         return appContext;
     }
