@@ -20,6 +20,17 @@ import java.util.List;
  *   <li>First row contains column names</li>
  *   <li>Subsequent rows contain data</li>
  * </ul>
+ * 
+ * <p>NULL vs Empty String Handling:</p>
+ * <ul>
+ *   <li><b>Blank/missing cells</b> → NULL in database</li>
+ *   <li><b>Empty string ("")</b> → Empty string in database</li>
+ *   <li><b>String "NULL" (case-insensitive)</b> → NULL in database (explicit NULL marker)</li>
+ *   <li><b>Any other value</b> → The actual value in database</li>
+ * </ul>
+ * 
+ * <p>This allows precise control over NULL vs empty string values, which is important
+ * for databases that distinguish between them (e.g., Oracle, PostgreSQL).</p>
  */
 public class XlsxDataLoader {
 
@@ -104,7 +115,14 @@ public class XlsxDataLoader {
                 
                 switch (cell.getCellType()) {
                     case STRING:
-                        stmt.setString(i + 1, cell.getStringCellValue());
+                        String strValue = cell.getStringCellValue();
+                        // Support explicit NULL marker: string "NULL" (case-insensitive) → NULL in database
+                        if ("NULL".equalsIgnoreCase(strValue)) {
+                            stmt.setNull(i + 1, java.sql.Types.VARCHAR);
+                        } else {
+                            // Empty string → empty string, any other value → that value
+                            stmt.setString(i + 1, strValue);
+                        }
                         break;
                     case NUMERIC:
                         if (DateUtil.isCellDateFormatted(cell)) {
