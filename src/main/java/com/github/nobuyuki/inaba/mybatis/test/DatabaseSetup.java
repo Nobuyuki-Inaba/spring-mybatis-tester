@@ -1,6 +1,5 @@
 package com.github.nobuyuki.inaba.mybatis.test;
 
-import com.github.nobuyuki.inaba.mybatis.test.database.DatabaseDriver;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import javax.sql.DataSource;
@@ -12,6 +11,10 @@ public class DatabaseSetup {
 
     /**
      * Creates a DataSource for testing.
+     * <p>
+     * Note: As of JDBC 4.0, explicit driver class loading is not required.
+     * The DriverManager automatically discovers and loads drivers from the classpath
+     * via the Service Provider mechanism.
      * 
      * @param url JDBC URL
      * @param username database username
@@ -23,12 +26,6 @@ public class DatabaseSetup {
         dataSource.setUrl(url);
         dataSource.setUsername(username);
         dataSource.setPassword(password);
-        
-        DatabaseDriver driver = DatabaseDriver.fromUrl(url);
-        if (driver != null) {
-            dataSource.setDriverClassName(driver.getDriverClassName());
-        }
-        
         return dataSource;
     }
 }
