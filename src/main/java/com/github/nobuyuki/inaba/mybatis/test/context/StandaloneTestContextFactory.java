@@ -2,16 +2,13 @@ package com.github.nobuyuki.inaba.mybatis.test.context;
 
 import com.github.nobuyuki.inaba.mybatis.test.DatabaseSetup;
 import com.github.nobuyuki.inaba.mybatis.test.MyBatisTest;
-import org.apache.ibatis.io.Resources;
-import org.apache.ibatis.jdbc.ScriptRunner;
+import com.github.nobuyuki.inaba.mybatis.test.database.ScriptExecutor;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import javax.sql.DataSource;
-import java.io.StringReader;
-import java.sql.Connection;
 
 /**
  * Factory for creating standalone (non-Spring) test contexts.
@@ -29,7 +26,7 @@ public class StandaloneTestContextFactory implements TestContextFactory {
         );
         testContext.setDataSource(dataSource);
         
-        runInitScripts(annotation.initScripts(), dataSource);
+        ScriptExecutor.runInitScripts(annotation.initScripts(), dataSource);
         
         SqlSessionFactory sqlSessionFactory = createSqlSessionFactory(
             dataSource, 
@@ -58,22 +55,5 @@ public class StandaloneTestContextFactory implements TestContextFactory {
         config.setEnvironment(environment);
         
         return new SqlSessionFactoryBuilder().build(config);
-    }
-    
-    private void runInitScripts(String[] scripts, DataSource dataSource) throws Exception {
-        if (scripts.length == 0) return;
-        
-        try (Connection conn = dataSource.getConnection()) {
-            ScriptRunner runner = new ScriptRunner(conn);
-            runner.setLogWriter(null);
-            
-            for (String script : scripts) {
-                try {
-                    runner.runScript(Resources.getResourceAsReader(script));
-                } catch (Exception e) {
-                    runner.runScript(new StringReader(script));
-                }
-            }
-        }
     }
 }
