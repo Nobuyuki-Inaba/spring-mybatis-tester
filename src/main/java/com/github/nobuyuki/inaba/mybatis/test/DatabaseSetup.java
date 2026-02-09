@@ -11,6 +11,10 @@ public class DatabaseSetup {
 
     /**
      * Creates a DataSource for testing.
+     * <p>
+     * Note: As of JDBC 4.0, explicit driver class loading is not required.
+     * The DriverManager automatically discovers and loads drivers from the classpath
+     * via the Service Provider mechanism.
      * 
      * @param url JDBC URL
      * @param username database username
@@ -22,16 +26,6 @@ public class DatabaseSetup {
         dataSource.setUrl(url);
         dataSource.setUsername(username);
         dataSource.setPassword(password);
-        
-        // Set driver class based on URL
-        if (url.startsWith("jdbc:h2:")) {
-            dataSource.setDriverClassName("org.h2.Driver");
-        } else if (url.startsWith("jdbc:mysql:")) {
-            dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        } else if (url.startsWith("jdbc:postgresql:")) {
-            dataSource.setDriverClassName("org.postgresql.Driver");
-        }
-        
         return dataSource;
     }
 }
