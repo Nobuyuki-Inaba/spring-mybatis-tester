@@ -1,5 +1,6 @@
 package com.github.nobuyuki.inaba.mybatis.test;
 
+import com.github.nobuyuki.inaba.mybatis.test.database.DatabaseDriver;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 import javax.sql.DataSource;
@@ -23,12 +24,9 @@ public class DatabaseSetup {
         dataSource.setUsername(username);
         dataSource.setPassword(password);
         
-        if (url.startsWith("jdbc:h2:")) {
-            dataSource.setDriverClassName("org.h2.Driver");
-        } else if (url.startsWith("jdbc:mysql:")) {
-            dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        } else if (url.startsWith("jdbc:postgresql:")) {
-            dataSource.setDriverClassName("org.postgresql.Driver");
+        DatabaseDriver driver = DatabaseDriver.fromUrl(url);
+        if (driver != null) {
+            dataSource.setDriverClassName(driver.getDriverClassName());
         }
         
         return dataSource;
