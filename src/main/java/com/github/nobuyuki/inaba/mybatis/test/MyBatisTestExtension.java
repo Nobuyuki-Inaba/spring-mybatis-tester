@@ -47,18 +47,20 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
     public void afterEach(ExtensionContext context) throws Exception {
         TestContext testContext = context.getStore(NAMESPACE).get("testContext", TestContext.class);
         
-        if (testContext != null) {
-            if (testContext.getTransaction() != null) {
-                testContext.getTransactionManager().rollback(testContext.getTransaction());
-            }
-            
-            if (testContext.getSqlSession() != null) {
-                testContext.getSqlSession().close();
-            }
-            
-            if (testContext.getApplicationContext() instanceof AnnotationConfigApplicationContext) {
-                ((AnnotationConfigApplicationContext) testContext.getApplicationContext()).close();
-            }
+        if (testContext == null) {
+            return;
+        }
+        
+        if (testContext.getTransaction() != null) {
+            testContext.getTransactionManager().rollback(testContext.getTransaction());
+        }
+        
+        if (testContext.getSqlSession() != null) {
+            testContext.getSqlSession().close();
+        }
+        
+        if (testContext.getApplicationContext() instanceof AnnotationConfigApplicationContext) {
+            ((AnnotationConfigApplicationContext) testContext.getApplicationContext()).close();
         }
     }
 
