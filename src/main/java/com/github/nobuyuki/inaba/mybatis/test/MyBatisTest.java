@@ -1,5 +1,6 @@
 package com.github.nobuyuki.inaba.mybatis.test;
 
+import com.github.nobuyuki.inaba.mybatis.test.database.DatabaseDefaults;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.lang.annotation.*;
@@ -66,15 +67,15 @@ public @interface MyBatisTest {
     /**
      * Database URL. Defaults to in-memory H2 database.
      */
-    String dbUrl() default "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL";
+    String dbUrl() default DatabaseDefaults.DEFAULT_H2_URL;
     
     /**
      * Database username.
      */
-    String dbUsername() default "sa";
+    String dbUsername() default DatabaseDefaults.DEFAULT_H2_USERNAME;
     
     /**
      * Database password.
      */
-    String dbPassword() default "";
+    String dbPassword() default DatabaseDefaults.DEFAULT_H2_PASSWORD;
 }
