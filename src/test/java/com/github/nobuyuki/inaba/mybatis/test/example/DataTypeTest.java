@@ -324,7 +324,7 @@ class DataTypeTest {
         dataTypeMapper.insert(entity);
 
         // When - Update all fields
-        Date newDate = new Date(System.currentTimeMillis() + 86400000); // +1 day
+        Date newDate = new Date(System.currentTimeMillis() + (24 * 60 * 60 * 1000L)); // +1 day
         LocalDateTime newDateTime = LocalDateTime.of(2025, 12, 31, 23, 59, 59);
         entity.setTestDate(newDate);
         entity.setTestDateTime(newDateTime);
