@@ -39,13 +39,11 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
         TestContext testContext = createTestContext(annotation, context);
         context.getStore(NAMESPACE).put("testContext", testContext);
         
-        // Load test data if specified
         if (!annotation.dataFile().isEmpty()) {
             XlsxDataLoader loader = new XlsxDataLoader();
             loader.loadData(annotation.dataFile(), testContext.getDataSource());
         }
         
-        // Start transaction
         if (annotation.autoRollback()) {
             DataSourceTransactionManager txManager = new DataSourceTransactionManager(testContext.getDataSource());
             TransactionStatus tx = txManager.getTransaction(new DefaultTransactionDefinition());
@@ -53,7 +51,6 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
             testContext.setTransactionManager(txManager);
         }
         
-        // Inject dependencies
         injectDependencies(testInstance, testContext);
     }
 
@@ -62,17 +59,14 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
         TestContext testContext = context.getStore(NAMESPACE).get("testContext", TestContext.class);
         
         if (testContext != null) {
-            // Rollback transaction
             if (testContext.getTransaction() != null) {
                 testContext.getTransactionManager().rollback(testContext.getTransaction());
             }
             
-            // Close SQL session
             if (testContext.getSqlSession() != null) {
                 testContext.getSqlSession().close();
             }
             
-            // Close Spring context if used
             if (testContext.getApplicationContext() instanceof AnnotationConfigApplicationContext) {
                 ((AnnotationConfigApplicationContext) testContext.getApplicationContext()).close();
             }
@@ -103,13 +97,11 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
         TestContext testContext = new TestContext();
         
         if (annotation.useSpring()) {
-            // Use Spring context
             ApplicationContext appContext = createSpringContext(annotation, context);
             testContext.setApplicationContext(appContext);
             testContext.setDataSource(appContext.getBean(DataSource.class));
             testContext.setSqlSessionFactory(appContext.getBean(SqlSessionFactory.class));
         } else {
-            // Standalone mode
             DataSource dataSource = DatabaseSetup.createDataSource(
                 annotation.dbUrl(), 
                 annotation.dbUsername(), 
@@ -117,10 +109,8 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
             );
             testContext.setDataSource(dataSource);
             
-            // Run init scripts
             runInitScripts(annotation.initScripts(), dataSource);
             
-            // Create SqlSessionFactory
             SqlSessionFactory sqlSessionFactory = createSqlSessionFactory(
                 dataSource, 
                 annotation.mappers().length > 0 ? annotation.mappers() : 
@@ -129,7 +119,6 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
             testContext.setSqlSessionFactory(sqlSessionFactory);
         }
         
-        // Create SQL session
         SqlSession sqlSession = testContext.getSqlSessionFactory().openSession();
         testContext.setSqlSession(sqlSession);
         
@@ -137,22 +126,17 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
     }
 
     private ApplicationContext createSpringContext(MyBatisTest annotation, ExtensionContext context) {
-        // Create minimal Spring context with MyBatis support
         AnnotationConfigApplicationContext appContext = new AnnotationConfigApplicationContext();
         
-        // Register configuration
         appContext.register(MyBatisTestConfiguration.class);
         
-        // Scan test class package for components
         String testPackage = context.getRequiredTestClass().getPackage().getName();
         appContext.scan(testPackage);
         
-        // Register mapper factory beans BEFORE refresh
         if (annotation.mappers().length > 0) {
             DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) appContext.getBeanFactory();
             
             for (Class<?> mapperClass : annotation.mappers()) {
-                // Register mapper as Spring bean using MapperFactoryBean
                 BeanDefinitionBuilder builder = BeanDefinitionBuilder
                     .genericBeanDefinition(MapperFactoryBean.class)
                     .addConstructorArgValue(mapperClass)
@@ -164,10 +148,8 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
             }
         }
         
-        // Now refresh to create all beans
         appContext.refresh();
 
-        // Run init scripts (e.g. schema.sql) against the DataSource created in the Spring context
         if (annotation.initScripts().length > 0) {
             try {
                 DataSource ds = appContext.getBean(DataSource.class);
@@ -184,7 +166,6 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
         org.apache.ibatis.session.Configuration config = new org.apache.ibatis.session.Configuration();
         config.setMapUnderscoreToCamelCase(true);
         
-        // Register mappers
         for (Class<?> mapper : mappers) {
             config.addMapper(mapper);
         }
@@ -199,8 +180,6 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
     }
 
     private Class<?>[] scanMappers(Class<?> testClass) {
-        // Scan for mapper interfaces in the same package
-        // For simplicity, return empty array - users should specify mappers
         return new Class<?>[0];
     }
 
@@ -215,7 +194,6 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
                 try {
                     runner.runScript(Resources.getResourceAsReader(script));
                 } catch (Exception e) {
-                    // Try as direct SQL
                     runner.runScript(new StringReader(script));
                 }
             }
@@ -237,20 +215,16 @@ public class MyBatisTestExtension implements BeforeEachCallback, AfterEachCallba
     }
 
     private Object resolveDependency(Class<?> type, TestContext testContext) {
-        // Try Spring context first
         if (testContext.getApplicationContext() != null) {
             try {
                 return testContext.getApplicationContext().getBean(type);
             } catch (Exception e) {
-                // Fall through to MyBatis
             }
         }
         
-        // Try MyBatis mapper
         try {
             return testContext.getSqlSession().getMapper(type);
         } catch (Exception e) {
-            // Check for common types
             if (type == SqlSession.class) {
                 return testContext.getSqlSession();
             } else if (type == DataSource.class) {

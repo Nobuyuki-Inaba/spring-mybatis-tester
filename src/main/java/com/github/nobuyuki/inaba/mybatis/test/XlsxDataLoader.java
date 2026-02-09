@@ -54,19 +54,16 @@ public class XlsxDataLoader {
                     continue;
                 }
                 
-                // Read header row
                 Row headerRow = sheet.getRow(0);
                 List<String> columns = new ArrayList<>();
                 for (Cell cell : headerRow) {
                     columns.add(sanitizeIdentifier(cell.getStringCellValue()));
                 }
                 
-                // Clear existing data
                 try (PreparedStatement stmt = conn.prepareStatement("DELETE FROM " + tableName)) {
                     stmt.execute();
                 }
                 
-                // Insert data rows
                 for (int rowNum = 1; rowNum <= sheet.getLastRowNum(); rowNum++) {
                     Row row = sheet.getRow(rowNum);
                     if (row == null) continue;
@@ -98,52 +95,49 @@ public class XlsxDataLoader {
     }
 
     private void insertRow(Connection conn, String tableName, List<String> columns, Row row) throws Exception {
-        StringBuilder sql = new StringBuilder("INSERT INTO ");
-        sql.append(tableName).append(" (");
-        sql.append(String.join(", ", columns));
-        sql.append(") VALUES (");
-        sql.append(String.join(", ", columns.stream().map(c -> "?").toArray(String[]::new)));
-        sql.append(")");
+        String placeholders = String.join(", ", columns.stream().map(c -> "?").toArray(String[]::new));
+        String sql = String.format("INSERT INTO %s (%s) VALUES (%s)", 
+            tableName, 
+            String.join(", ", columns), 
+            placeholders);
         
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-            for (int i = 0; i < columns.size(); i++) {
-                Cell cell = row.getCell(i);
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            for (int colIndex = 1; colIndex <= columns.size(); colIndex++) {
+                Cell cell = row.getCell(colIndex - 1);
                 if (cell == null) {
-                    stmt.setNull(i + 1, java.sql.Types.VARCHAR);
+                    stmt.setNull(colIndex, java.sql.Types.VARCHAR);
                     continue;
                 }
                 
                 switch (cell.getCellType()) {
                     case STRING:
                         String strValue = cell.getStringCellValue();
-                        // Support explicit NULL marker: string "NULL" (case-insensitive) → NULL in database
                         if ("NULL".equalsIgnoreCase(strValue)) {
-                            stmt.setNull(i + 1, java.sql.Types.VARCHAR);
+                            stmt.setNull(colIndex, java.sql.Types.VARCHAR);
                         } else {
-                            // Empty string → empty string, any other value → that value
-                            stmt.setString(i + 1, strValue);
+                            stmt.setString(colIndex, strValue);
                         }
                         break;
                     case NUMERIC:
                         if (DateUtil.isCellDateFormatted(cell)) {
-                            stmt.setDate(i + 1, new java.sql.Date(cell.getDateCellValue().getTime()));
+                            stmt.setDate(colIndex, new java.sql.Date(cell.getDateCellValue().getTime()));
                         } else {
                             double numValue = cell.getNumericCellValue();
                             if (numValue == (long) numValue) {
-                                stmt.setLong(i + 1, (long) numValue);
+                                stmt.setLong(colIndex, (long) numValue);
                             } else {
-                                stmt.setDouble(i + 1, numValue);
+                                stmt.setDouble(colIndex, numValue);
                             }
                         }
                         break;
                     case BOOLEAN:
-                        stmt.setBoolean(i + 1, cell.getBooleanCellValue());
+                        stmt.setBoolean(colIndex, cell.getBooleanCellValue());
                         break;
                     case BLANK:
-                        stmt.setNull(i + 1, java.sql.Types.VARCHAR);
+                        stmt.setNull(colIndex, java.sql.Types.VARCHAR);
                         break;
                     default:
-                        stmt.setString(i + 1, cell.toString());
+                        stmt.setString(colIndex, cell.toString());
                 }
             }
             stmt.executeUpdate();

@@ -23,7 +23,6 @@ public class DatabaseSetup {
         dataSource.setUsername(username);
         dataSource.setPassword(password);
         
-        // Set driver class based on URL
         if (url.startsWith("jdbc:h2:")) {
             dataSource.setDriverClassName("org.h2.Driver");
         } else if (url.startsWith("jdbc:mysql:")) {
